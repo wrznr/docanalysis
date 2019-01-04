@@ -52,58 +52,6 @@ import ocrolib
 import json
 from xml.dom import minidom
 
-parser = argparse.ArgumentParser("""
-Image deskewing using non-linear processing.
-    
-    python ocrd-anyBaseOCR-deskew.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)
-
-This is a compute-intensive deskew method that works on degraded and historical book pages.
-""")
-
-parser.add_argument('-p','--parameter',type=str,help="Parameter file location")
-parser.add_argument('-e','--escale',type=float,help='scale for estimating a mask over the text region, default: %(default)s')
-parser.add_argument('-t','--threshold',type=float,help='threshold, determines lightness, default: %(default)s')
-parser.add_argument('-b','--bignore',type=float,help='ignore this much of the border for threshold estimation, default: %(default)s')
-parser.add_argument('-ms','--maxskew',type=float,help='skew angle estimation parameters (degrees), default: %(default)s')
-parser.add_argument('--skewsteps',type=int,help='steps for skew angle estimation (per degree), default: %(default)s')
-parser.add_argument('--debug',type=float,help='display intermediate results, default: %(default)s')
-parser.add_argument('--lo',type=float,help='percentile for black estimation, default: %(default)s')
-parser.add_argument('--hi',type=float,help='percentile for white estimation, default: %(default)s')
-parser.add_argument('-Q','--parallel',type=int)
-parser.add_argument('-O','--Output',default=None,help="output directory")
-parser.add_argument('-w','--work',type=str,help="Working directory location", default=".")
-parser.add_argument('-I','--Input',default=None,help="Input directory")
-parser.add_argument('-m','--mets',default=None,help="METs input file")
-parser.add_argument('-o','--OutputMets',default=None,help="METs output file")
-parser.add_argument('-g','--group',default=None,help="METs image group id")
-
-args = parser.parse_args()
-
-## Read parameter values from json file
-if args.parameter:
-    if not os.path.exists(args.parameter):
-        print("Error : Parameter file does not exists.")
-        sys.exit(0)
-    else:
-        param = json.load(open(args.parameter))
-else:
-    if not os.path.exists('ocrd-anyBaseOCR-parameter.json'):
-        print("Error : Parameter file does not exists.")
-        sys.exit(0)
-    else:
-        param = json.load(open('ocrd-anyBaseOCR-parameter.json'))
-
-args.bignore = param["anyBaseOCR"]["deskew"]["bignore"]
-args.escale = param["anyBaseOCR"]["deskew"]["escale"]
-args.threshold = param["anyBaseOCR"]["deskew"]["threshold"]
-args.lo = param["anyBaseOCR"]["deskew"]["lo"]
-args.hi = param["anyBaseOCR"]["deskew"]["hi"]
-args.maxskew = param["anyBaseOCR"]["deskew"]["maxskew"]
-args.skewsteps = param["anyBaseOCR"]["deskew"]["skewsteps"]
-args.debug = param["anyBaseOCR"]["deskew"]["debug"]
-args.parallel = param["anyBaseOCR"]["deskew"]["parallel"]
-### End to read parameters
-
 def parseXML(fpath):
     input_files=[]
     xmldoc = minidom.parse(fpath)
@@ -219,18 +167,71 @@ def deskew(fpath, job):
     ocrolib.write_image_binary(base+".ds.png",bin)
     return base+".ds.png"
 
-# mendatory parameter check
-if not args.mets or not args.Input or not args.Output or not args.work:
-    parser.print_help()
-    print("Example: python ocrd-anyBaseOCR-deskew.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)")
-    sys.exit(0)
+def main():
+    parser = argparse.ArgumentParser("""
+    Image deskewing using non-linear processing.
+        
+        python ocrd-anyBaseOCR-deskew.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)
 
-if args.work:
-    if not os.path.exists(args.work):
-        os.mkdir(args.work)
+    This is a compute-intensive deskew method that works on degraded and historical book pages.
+    """)
 
-files = parseXML(args.mets)
-fname=[]
-for i, f in enumerate(files):
-    fname.append(deskew(str(f),i+1))
-write_to_xml(fname)
+    parser.add_argument('-p','--parameter',type=str,help="Parameter file location")
+    parser.add_argument('-e','--escale',type=float,help='scale for estimating a mask over the text region, default: %(default)s')
+    parser.add_argument('-t','--threshold',type=float,help='threshold, determines lightness, default: %(default)s')
+    parser.add_argument('-b','--bignore',type=float,help='ignore this much of the border for threshold estimation, default: %(default)s')
+    parser.add_argument('-ms','--maxskew',type=float,help='skew angle estimation parameters (degrees), default: %(default)s')
+    parser.add_argument('--skewsteps',type=int,help='steps for skew angle estimation (per degree), default: %(default)s')
+    parser.add_argument('--debug',type=float,help='display intermediate results, default: %(default)s')
+    parser.add_argument('--lo',type=float,help='percentile for black estimation, default: %(default)s')
+    parser.add_argument('--hi',type=float,help='percentile for white estimation, default: %(default)s')
+    parser.add_argument('-Q','--parallel',type=int)
+    parser.add_argument('-O','--Output',default=None,help="output directory")
+    parser.add_argument('-w','--work',type=str,help="Working directory location", default=".")
+    parser.add_argument('-I','--Input',default=None,help="Input directory")
+    parser.add_argument('-m','--mets',default=None,help="METs input file")
+    parser.add_argument('-o','--OutputMets',default=None,help="METs output file")
+    parser.add_argument('-g','--group',default=None,help="METs image group id")
+
+    args = parser.parse_args()
+
+    ## Read parameter values from json file
+    if args.parameter:
+        if not os.path.exists(args.parameter):
+            print("Error : Parameter file does not exists.")
+            sys.exit(0)
+        else:
+            param = json.load(open(args.parameter))
+    else:
+        if not os.path.exists('ocrd-anyBaseOCR-parameter.json'):
+            print("Error : Parameter file does not exists.")
+            sys.exit(0)
+        else:
+            param = json.load(open('ocrd-anyBaseOCR-parameter.json'))
+
+    args.bignore = param["anyBaseOCR"]["deskew"]["bignore"]
+    args.escale = param["anyBaseOCR"]["deskew"]["escale"]
+    args.threshold = param["anyBaseOCR"]["deskew"]["threshold"]
+    args.lo = param["anyBaseOCR"]["deskew"]["lo"]
+    args.hi = param["anyBaseOCR"]["deskew"]["hi"]
+    args.maxskew = param["anyBaseOCR"]["deskew"]["maxskew"]
+    args.skewsteps = param["anyBaseOCR"]["deskew"]["skewsteps"]
+    args.debug = param["anyBaseOCR"]["deskew"]["debug"]
+    args.parallel = param["anyBaseOCR"]["deskew"]["parallel"]
+    ### End to read parameters
+
+    # mendatory parameter check
+    if not args.mets or not args.Input or not args.Output or not args.work:
+        parser.print_help()
+        print("Example: python ocrd-anyBaseOCR-deskew.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)")
+        sys.exit(0)
+
+    if args.work:
+        if not os.path.exists(args.work):
+            os.mkdir(args.work)
+
+    files = parseXML(args.mets)
+    fname=[]
+    for i, f in enumerate(files):
+        fname.append(deskew(str(f),i+1))
+    write_to_xml(fname)

@@ -17,9 +17,9 @@ setup(
     packages=['ocrd_anybaseocr'],
     entry_points={
         'console_scripts': [
-            'ocrd-anybaseocr-binarize = ocrd_anybaseocr.cli.binarize',
-            'ocrd-anybaseocr-crop     = ocrd_anybaseocr.cli.cropping',
-            'ocrd-anybaseocr-deskew   = ocrd_anybaseocr.cli.deskew',
+            'ocrd-anybaseocr-binarize = ocrd_anybaseocr.cli.binarize:main',
+            'ocrd-anybaseocr-crop     = ocrd_anybaseocr.cli.cropping:main',
+            'ocrd-anybaseocr-deskew   = ocrd_anybaseocr.cli.deskew:main',
         ]
     },
 )
