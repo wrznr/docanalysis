@@ -7,13 +7,13 @@
 # Author: Syed Saqib Bukhari, Mohammad Mohsin Reza, Md. Ajraf Rakib
 # Responsible: Syed Saqib Bukhari, Mohammad Mohsin Reza, Md. Ajraf Rakib
 # Contact Email: Saqib.Bukhari@dfki.de, Mohammad_mohsin.reza@dfki.de, Md_ajraf.rakib@dfki.de
-# Note: 
+# Note:
 # 1) this work has been done in DFKI, Kaiserslautern, Germany.
 # 2) The parameters values are read from ocrd-anyBaseOCR-parameter.json file. The values can be changed in that file.
 # 3) The command line IO usage is based on "OCR-D" project guidelines (https://ocr-d.github.io/). A sample image file (samples/becker_quaestio_1586_00013.tif) and mets.xml (work_dir/mets.xml) are provided. The sequence of operations is: binarization, deskewing, cropping and dewarping (or can also be: binarization, dewarping, deskewing, and cropping; depends upon use-case).
 
 # *********** Method Behaviour ********************
-# This function takes a document image as input and crops/selects the page content 
+# This function takes a document image as input and crops/selects the page content
 # area only (that's mean remove textual noise as well as any other noise around page content area)
 # *********** Method Behaviour ********************
 
@@ -21,9 +21,9 @@
 # Copyright 2018 Syed Saqib Bukhari, Mohammad Mohsin Reza, Md. Ajraf Rakib
 # Apache License 2.0
 
-# A permissive license whose main conditions require preservation of copyright 
-# and license notices. Contributors provide an express grant of patent rights. 
-# Licensed works, modifications, and larger works may be distributed under 
+# A permissive license whose main conditions require preservation of copyright
+# and license notices. Contributors provide an express grant of patent rights.
+# Licensed works, modifications, and larger works may be distributed under
 # different terms and without source code.
 
 # *********** LICENSE ********************
@@ -75,8 +75,8 @@ def write_to_xml(fpath):
     if not args.OutputMets:
         metsFileSave = open(os.path.join(args.work, os.path.basename(args.mets)), "w")
     else:
-        metsFileSave = open(os.path.join(args.work, args.OutputMets if args.OutputMets.endswith(".xml") else args.OutputMets+'.xml'), "w") 
-    metsFileSave.write(xmldoc.toxml()) 
+        metsFileSave = open(os.path.join(args.work, args.OutputMets if args.OutputMets.endswith(".xml") else args.OutputMets+'.xml'), "w")
+    metsFileSave.write(xmldoc.toxml())
 
 def write_crop_coordinate(base, coordinate):
     x1,y1,x2,y2 = coordinate
@@ -84,7 +84,7 @@ def write_crop_coordinate(base, coordinate):
         fp.write(str(x1)+"\t"+str(y1)+"\t"+str(x2-x1)+"\t"+str(y2-y1))
 
 def remove_rular(arg, base):
-    basefile = ocrolib.allsplitext(os.path.basename(arg))[0]    
+    basefile = ocrolib.allsplitext(os.path.basename(arg))[0]
     img = cv2.imread(arg)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     _, contours, hierarchy = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -111,7 +111,7 @@ def remove_rular(arg, base):
 
     predictRular=[]
     for rect in rects:
-        (x,y,w,h)=rect        
+        (x,y,w,h)=rect
         if (w<width*args.rularWidth) and ((y>height*args.positionBelow) or ((x+w)<width*args.positionLeft) or (x>width*args.positionRight)):
             if (args.rularRatioMin<round(float(w)/float(h),2)<args.rularRatioMax) or (args.rularRatioMin<round(float(h)/float(w),2)<args.rularRatioMax):
                 blackPixel = np.count_nonzero(img[y:y+h,x:x+w]==0)
@@ -123,7 +123,7 @@ def remove_rular(arg, base):
         x,y,w,h,t = predictRular[0]
         cv2.rectangle(img, (x-15,y-15), (x+w+20,y+h+20), (255, 255, 255), cv2.FILLED)
     save_file_path = base + '.pf.png'
-    cv2.imwrite(save_file_path, img)    
+    cv2.imwrite(save_file_path, img)
     return save_file_path
 # End of function remove_rular(arg)
 
@@ -140,14 +140,14 @@ def BorderLine(MaxBoundary, lines, index, flag):
             else:
                 getLine=1
     elif flag=="bottom" or flag=="right":
-        for i in reversed(range(len(lines)-1)):
+        for i in reversed(list(range(len(lines)-1))):
             if(abs(lines[i][index]-lines[i+1][index]))<=15 and lines[i][index]>MaxBoundary:
                 LastLine=[lines[i][0], lines[i][1], lines[i][2], lines[i][3]]
                 getLine+=1
             elif getLine>=3:
                 break
             else:
-                getLine=1                
+                getLine=1
     if getLine>=3 and LastLine:
         if flag=="top":
             lineDetectH.append((LastLine[0], max(LastLine[1],LastLine[3]), LastLine[2], max(LastLine[1],LastLine[3])))
@@ -176,7 +176,7 @@ def detect_lines(arg):
     imgHeight, imgWidth = gray.shape
     lines = lsd(gray)
 
-    for i in xrange(lines.shape[0]):
+    for i in range(lines.shape[0]):
         pt1 = (int(lines[i, 0]), int(lines[i, 1]))
         pt2 = (int(lines[i, 2]), int(lines[i, 3]))
         width = lines[i, 4]
@@ -189,9 +189,9 @@ def detect_lines(arg):
     return img, imgHeight, imgWidth, Hline, Vline
 
 def select_borderLine(arg, base):
-    basefile = ocrolib.allsplitext(os.path.basename(arg))[0]    
+    basefile = ocrolib.allsplitext(os.path.basename(arg))[0]
     img, imgHeight, imgWidth, Hlines, Vlines = detect_lines(arg)
-    
+
     # top side
     BorderLine(imgHeight*0.25, Hlines, index=1, flag="top")
     # left side
@@ -206,7 +206,7 @@ def select_borderLine(arg, base):
         for l2 in lineDetectV:
             x ,y = get_intersect((l1[0],l1[1]), (l1[2],l1[3]), (l2[0],l2[1]), (l2[2],l2[3]))
             intersectPoint.append([x,y])
-    Xstart = 0; Xend = imgWidth; Ystart = 0; Yend = imgHeight    
+    Xstart = 0; Xend = imgWidth; Ystart = 0; Yend = imgHeight
     for i in intersectPoint:
         Xs = int(i[0])+10 if i[0]<imgWidth*0.4 else 10
         if Xs>Xstart: Xstart = Xs
@@ -230,7 +230,7 @@ def filter_noisebox(textarea, height, width):
     while st==True:
         textarea = [list(x) for x in textarea if x not in tmp]
         tmp=[]
-        textarea = sorted(textarea,key=lambda x:(x[3]),reverse=False)        
+        textarea = sorted(textarea,key=lambda x:(x[3]),reverse=False)
         #print textarea
         x11,y11,x12,y12 = textarea[0]
         x21,y21,x22,y22 = textarea[1]
@@ -264,7 +264,7 @@ def detect_textarea(arg):
 
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 1)) # for historical docs
     connected = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
-    _, contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)    
+    _, contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     mask = np.zeros(bw.shape, dtype=np.uint8)
 
@@ -341,7 +341,7 @@ def crop_area(textarea, binImg, rgb, base):
         maxBox = textarea[0]
         for chkBox in textarea:
             if maxBox != chkBox:
-                x11,y11,x12,y12 = maxBox                
+                x11,y11,x12,y12 = maxBox
                 x21,y21,x22,y22 = chkBox
                 if ((x11<=x21<=x12) or (x21<=x11<=x22)):
                     tmp.append(maxBox)
@@ -376,7 +376,7 @@ def crop_area(textarea, binImg, rgb, base):
 def main():
     parser = argparse.ArgumentParser("""
     Image crop using non-linear processing.
-        
+
         python ocrd-anyBaseOCR-cropping.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)
 
     """)
@@ -441,29 +441,29 @@ def main():
     files = parseXML(args.mets)
     fname=[]
     for i, f in enumerate(files):
-            print "Process file: ", str(f) , i+1
-            base,_ = ocrolib.allsplitext(str(f))
-            binImg = ocrolib.read_image_binary(str(f))
+        print("Process file: ", str(f) , i+1)
+        base,_ = ocrolib.allsplitext(str(f))
+        binImg = ocrolib.read_image_binary(str(f))
 
-            lineDetectH=[]; lineDetectV=[]
-            fpath = remove_rular(str(f), base)
-            textarea, rgb, height, width = detect_textarea(fpath)
-            args.colSeparator = int(width * args.colSeparator)
+        lineDetectH=[]; lineDetectV=[]
+        fpath = remove_rular(str(f), base)
+        textarea, rgb, height, width = detect_textarea(fpath)
+        args.colSeparator = int(width * args.colSeparator)
 
-            if len(textarea)>1:
-                    textarea = crop_area(textarea, binImg, rgb, base)
-                    if len(textarea)==0:
-                            select_borderLine(fpath, base)
-            elif len(textarea)==1 and (height*width*0.5 <  (abs(textarea[0][2]-textarea[0][0]) * abs(textarea[0][3]-textarea[0][1]))):
-                    x1,y1,x2,y2 = textarea[0]        
-                    x1 = x1-20 if x1>20 else 0
-                    x2 = x2+20 if x2<width-20 else width
-                    y1 = y1-40 if y1>40 else 0
-                    y2 = y2+40 if y2<height-40 else height
+        if len(textarea)>1:
+            textarea = crop_area(textarea, binImg, rgb, base)
+            if len(textarea)==0:
+                select_borderLine(fpath, base)
+        elif len(textarea)==1 and (height*width*0.5 <  (abs(textarea[0][2]-textarea[0][0]) * abs(textarea[0][3]-textarea[0][1]))):
+            x1,y1,x2,y2 = textarea[0]
+            x1 = x1-20 if x1>20 else 0
+            x2 = x2+20 if x2<width-20 else width
+            y1 = y1-40 if y1>40 else 0
+            y2 = y2+40 if y2<height-40 else height
 
-                    save_pf(base, [x1,y1,x2,y2])        
-            else:
-                    select_borderLine(fpath, base)
+            save_pf(base, [x1,y1,x2,y2])
+        else:
+            select_borderLine(fpath, base)
 
-            fname.append(base + '.pf.png')
+        fname.append(base + '.pf.png')
     write_to_xml(fname)
