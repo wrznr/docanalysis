@@ -15,6 +15,9 @@ setup(
         'ocrd-fork-ocropy>=1.4.0a1',
     ],
     packages=['ocrd_anybaseocr'],
+    package_data={
+        '': ['*.json']
+    },
     entry_points={
         'console_scripts': [
             'ocrd-anybaseocr-binarize = ocrd_anybaseocr.cli.binarize:main',

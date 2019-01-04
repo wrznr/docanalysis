@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "git_url": "https://github.com/kba/ocrd_dfkitools",
+  "dockerhub": "ocrd/dfkitools",
+  "tools": {
+    "ocrd-anybaseocr-deskew": {
+      "executable": "ocrd-anybaseocr-deskew",
+      "description": "Deskew images with the algorithm from ocropy",
+      "categories": ["Image preprocessing"],
+      "steps": ["preprocessing/optimization/deskewing"],
+      "parameters": {
+        "escale":    {"type": "number", "format": "float",   "default": 1.0, "description": "scale for estimating a mask over the text region"},
+        "bignore":   {"type": "number", "format": "float",   "default": 0.1, "description": "ignore this much of the border for threshold estimation"},
+        "threshold": {"type": "number", "format": "float",   "default": 0.5, "description": "threshold, determines lightness"},
+        "maxskew":   {"type": "number", "format": "float",   "default": 1.0, "description": "skew angle estimation parameters (degrees)"},
+        "skewsteps": {"type": "number", "format": "integer", "default": 8,   "description": "steps for skew angle estimation (per degree)"},
+        "debug":     {"type": "number", "format": "integer", "default": 0,   "description": "display intermediate results"},
+        "parallel":  {"type": "number", "format": "integer", "default": 0,   "description": "???"},
+        "lo":        {"type": "number", "format": "integer", "default": 5,   "description": "percentile for black estimation"},
+        "hi":        {"type": "number", "format": "integer", "default": 90,   "description": "percentile for white estimation"}
+      }
+    }
+  }
+}

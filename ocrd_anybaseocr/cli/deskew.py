@@ -52,49 +52,50 @@ from pylab import amin, amax, linspace, mean, var, plot, ginput, ones, clip, ims
 from scipy.ndimage import filters, interpolation, morphology
 from scipy import stats
 import ocrolib
-from ..utils import parseXML, write_to_xml, print_info
+from ..utils import parseXML, write_to_xml, print_info, parse_params_with_defaults
+from ..constants import OCRD_TOOL
 
 class OcrdAnybaseocrDeskewer():
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, param):
+        self.param = param
 
     def estimate_skew_angle(self, image, angles):
-        args = self.args
+        param = self.param
         estimates = []
 
         for a in angles:
             v = mean(interpolation.rotate(image, a, order=0, mode='constant'), axis=1)
             v = var(v)
             estimates.append((v, a))
-        if args.debug > 0:
+        if param['debug'] > 0:
             plot([y for x, y in estimates], [x for x, y in estimates])
-            ginput(1, args.debug)
+            ginput(1, param['debug'])
         _, a = max(estimates)
         return a
 
 
     def deskew(self, fpath, job):
-        args = self.args
+        param = self.param
         base, _ = ocrolib.allsplitext(fpath)
         basefile = ocrolib.allsplitext(os.path.basename(fpath))[0]
 
-        if args.parallel < 2:
+        if param['parallel'] < 2:
             print_info("=== %s %-3d" % (fpath, job))
         raw = ocrolib.read_image_gray(fpath)
 
         flat = raw
         # estimate skew angle and rotate
-        if args.maxskew > 0:
-            if args.parallel < 2:
+        if param['maxskew'] > 0:
+            if param['parallel'] < 2:
                 print_info("estimating skew angle")
             d0, d1 = flat.shape
-            o0, o1 = int(args.bignore*d0), int(args.bignore*d1)
+            o0, o1 = int(param['bignore']*d0), int(param['bignore']*d1)
             flat = amax(flat)-flat
             flat -= amin(flat)
             est = flat[o0:d0-o0, o1:d1-o1]
-            ma = args.maxskew
-            ms = int(2*args.maxskew*args.skewsteps)
+            ma = param['maxskew']
+            ms = int(2*param['maxskew']*param['skewsteps'])
             angle = self.estimate_skew_angle(est, linspace(-ma, ma, ms+1))
             flat = interpolation.rotate(flat, angle, mode='constant', reshape=0)
             flat = amax(flat)-flat
@@ -102,41 +103,41 @@ class OcrdAnybaseocrDeskewer():
             angle = 0
 
         # estimate low and high thresholds
-        if args.parallel < 2:
+        if param['parallel'] < 2:
             print_info("estimating thresholds")
         d0, d1 = flat.shape
-        o0, o1 = int(args.bignore*d0), int(args.bignore*d1)
+        o0, o1 = int(param['bignore']*d0), int(param['bignore']*d1)
         est = flat[o0:d0-o0, o1:d1-o1]
-        if args.escale > 0:
+        if param['escale'] > 0:
             # by default, we use only regions that contain
             # significant variance; this makes the percentile
             # based low and high estimates more reliable
-            e = args.escale
+            e = param['escale']
             v = est-filters.gaussian_filter(est, e*20.0)
             v = filters.gaussian_filter(v**2, e*20.0)**0.5
             v = (v > 0.3*amax(v))
             v = morphology.binary_dilation(v, structure=ones((int(e*50), 1)))
             v = morphology.binary_dilation(v, structure=ones((1, int(e*50))))
-            if args.debug > 0:
+            if param['debug'] > 0:
                 imshow(v)
-                ginput(1, args.debug)
+                ginput(1, param['debug'])
             est = est[v]
-        lo = stats.scoreatpercentile(est.ravel(), args.lo)
-        hi = stats.scoreatpercentile(est.ravel(), args.hi)
+        lo = stats.scoreatpercentile(est.ravel(), param['lo'])
+        hi = stats.scoreatpercentile(est.ravel(), param['hi'])
         # rescale the image to get the gray scale image
-        if args.parallel < 2:
+        if param['parallel'] < 2:
             print_info("rescaling")
         flat -= lo
         flat /= (hi-lo)
         flat = clip(flat, 0, 1)
-        if args.debug > 0:
+        if param['debug'] > 0:
             imshow(flat, vmin=0, vmax=1)
-            ginput(1, args.debug)
-        deskewed = 1*(flat > args.threshold)
+            ginput(1, param['debug'])
+        deskewed = 1*(flat > param['threshold'])
 
         # output the normalized grayscale and the thresholded images
         print_info("%s lo-hi (%.2f %.2f) angle %4.1f" % (basefile, lo, hi, angle))
-        if args.parallel < 2:
+        if param['parallel'] < 2:
             print_info("writing")
         ocrolib.write_image_binary(base+".ds.png", deskewed)
         return base+".ds.png"
@@ -151,63 +152,25 @@ def main():
     This is a compute-intensive deskew method that works on degraded and historical book pages.
     """)
 
-    parser.add_argument('-p', '--parameter', type=str,
-                        help="Parameter file location")
-    parser.add_argument('-e', '--escale', type=float,
-                        help='scale for estimating a mask over the text region, default: %(default)s')
-    parser.add_argument('-t', '--threshold', type=float,
-                        help='threshold, determines lightness, default: %(default)s')
-    parser.add_argument('-b', '--bignore', type=float,
-                        help='ignore this much of the border for threshold estimation, default: %(default)s')
-    parser.add_argument('-ms', '--maxskew', type=float,
-                        help='skew angle estimation parameters (degrees), default: %(default)s')
-    parser.add_argument('--skewsteps', type=int,
-                        help='steps for skew angle estimation (per degree), default: %(default)s')
-    parser.add_argument('--debug', type=float,
-                        help='display intermediate results, default: %(default)s')
-    parser.add_argument(
-        '--lo', type=float, help='percentile for black estimation, default: %(default)s')
-    parser.add_argument(
-        '--hi', type=float, help='percentile for white estimation, default: %(default)s')
-    parser.add_argument('-Q', '--parallel', type=int)
-    parser.add_argument('-O', '--Output', default=None,
-                        help="output directory")
-    parser.add_argument('-w', '--work', type=str,
-                        help="Working directory location", default=".")
+    parser.add_argument('-p', '--parameter', type=str, help="Parameter file location")
+    parser.add_argument('-O', '--Output', default=None, help="output directory")
+    parser.add_argument('-w', '--work', type=str, help="Working directory location", default=".")
     parser.add_argument('-I', '--Input', default=None, help="Input directory")
     parser.add_argument('-m', '--mets', default=None, help="METs input file")
-    parser.add_argument('-o', '--OutputMets', default=None,
-                        help="METs output file")
-    parser.add_argument('-g', '--group', default=None,
-                        help="METs image group id")
+    parser.add_argument('-o', '--OutputMets', default=None, help="METs output file")
+    parser.add_argument('-g', '--group', default=None, help="METs image group id")
 
     args = parser.parse_args()
 
     #args.files = ocrolib.glob_all(args.files)
 
     # Read parameter values from json file
+    param = {}
     if args.parameter:
-        if not os.path.exists(args.parameter):
-            print("Error : Parameter file does not exists.")
-            sys.exit(0)
-        else:
-            param = json.load(open(args.parameter))
-    else:
-        if not os.path.exists('ocrd-anyBaseOCR-parameter.json'):
-            print("Error : Parameter file does not exists.")
-            sys.exit(0)
-        else:
-            param = json.load(open('ocrd-anyBaseOCR-parameter.json'))
-
-    args.bignore = param["anyBaseOCR"]["deskew"]["bignore"]
-    args.escale = param["anyBaseOCR"]["deskew"]["escale"]
-    args.threshold = param["anyBaseOCR"]["deskew"]["threshold"]
-    args.lo = param["anyBaseOCR"]["deskew"]["lo"]
-    args.hi = param["anyBaseOCR"]["deskew"]["hi"]
-    args.maxskew = param["anyBaseOCR"]["deskew"]["maxskew"]
-    args.skewsteps = param["anyBaseOCR"]["deskew"]["skewsteps"]
-    args.debug = param["anyBaseOCR"]["deskew"]["debug"]
-    args.parallel = param["anyBaseOCR"]["deskew"]["parallel"]
+        with open(args.parameter, 'r') as param_file:
+            param = json.loads(param_file.read())
+    param = parse_params_with_defaults(param, OCRD_TOOL['tools']['ocrd-anybaseocr-deskew']['parameters'])
+    print("%s" % param)
     # End to read parameters
 
     # mendatory parameter check
@@ -220,7 +183,7 @@ def main():
         if not os.path.exists(args.work):
             os.mkdir(args.work)
 
-    deskewer = OcrdAnybaseocrDeskewer(args)
+    deskewer = OcrdAnybaseocrDeskewer(param)
     files = parseXML(args.mets, args.Input)
     fnames = []
     for i, fname in enumerate(files):

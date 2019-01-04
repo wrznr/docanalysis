@@ -13,6 +13,16 @@ __all__ = [
 def print_info(*objs):
     print("INFO: ", *objs, file=sys.stdout)
 
+def parse_params_with_defaults(params_json, params_schema):
+    """
+    Fill a parameters dict with the default values from param_schema. Dumbed down from ocr-d/core
+    """
+    for param_name in params_schema:
+        param_schema = params_schema[param_name]
+        if param_name not in params_json and 'default' in param_schema:
+            params_json[param_name] = param_schema['default']
+    return params_json
+
 def parseXML(fpath, Input):
     input_files = []
     xmldoc = minidom.parse(fpath)
