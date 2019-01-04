@@ -41,50 +41,7 @@ import numpy as np
 import ntpath
 from pylsd import lsd
 import json
-from xml.dom import minidom
 from PIL import Image
-
-
-def parseXML(fpath):
-    input_files = []
-    xmldoc = minidom.parse(fpath)
-    nodes = xmldoc.getElementsByTagName('mets:fileGrp')
-    for attr in nodes:
-        if attr.attributes['USE'].value == args.Input:
-            childNodes = attr.getElementsByTagName('mets:FLocat')
-            for f in childNodes:
-                input_files.append(f.attributes['xlink:href'].value)
-    return input_files
-
-
-def write_to_xml(fpath):
-    xmldoc = minidom.parse(args.mets)
-    subRoot = xmldoc.createElement('mets:fileGrp')
-    subRoot.setAttribute('USE', args.Output)
-
-    for f in fpath:
-        basefile = ocrolib.allsplitext(os.path.basename(f))[0]
-        child = xmldoc.createElement('mets:file')
-        child.setAttribute('ID', 'CROP_'+basefile)
-        child.setAttribute('GROUPID', 'P_' + basefile)
-        child.setAttribute('MIMETYPE', "image/png")
-
-        subChild = xmldoc.createElement('mets:FLocat')
-        subChild.setAttribute('LOCTYPE', "URL")
-        subChild.setAttribute('xlink:href', f)
-
-        subRoot.appendChild(child)
-        child.appendChild(subChild)
-
-    xmldoc.getElementsByTagName('mets:fileSec')[0].appendChild(subRoot)
-
-    if not args.OutputMets:
-        metsFileSave = open(os.path.join(
-            args.work, os.path.basename(args.mets)), "w")
-    else:
-        metsFileSave = open(os.path.join(args.work, args.OutputMets if args.OutputMets.endswith(
-            ".xml") else args.OutputMets+'.xml'), "w")
-    metsFileSave.write(xmldoc.toxml())
 
 
 def write_crop_coordinate(base, coordinate):

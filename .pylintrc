@@ -29,3 +29,4 @@ disable =
     line-too-long,
     too-many-branches,
     too-few-public-methods,
+    wrong-import-order,

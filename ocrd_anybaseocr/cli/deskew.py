@@ -43,68 +43,14 @@
 
 
 from pylab import *
-from numpy.ctypeslib import ndpointer
 import argparse
 import os
 import os.path
-import glob
-from scipy.ndimage import filters, interpolation, morphology, measurements
+from scipy.ndimage import filters, interpolation, morphology
 from scipy import stats
-import multiprocessing
 import ocrolib
 import json
-from xml.dom import minidom
-
-
-def parseXML(fpath):
-    input_files = []
-    xmldoc = minidom.parse(fpath)
-    nodes = xmldoc.getElementsByTagName('mets:fileGrp')
-    for attr in nodes:
-        if attr.attributes['USE'].value == args.Input:
-            childNodes = attr.getElementsByTagName('mets:FLocat')
-            for f in childNodes:
-                input_files.append(f.attributes['xlink:href'].value)
-    return input_files
-
-
-def write_to_xml(fpath):
-    xmldoc = minidom.parse(args.mets)
-    subRoot = xmldoc.createElement('mets:fileGrp')
-    subRoot.setAttribute('USE', args.Output)
-
-    for f in fpath:
-        #basefile = os.path.splitext(os.path.splitext(os.path.basename(f))[0])[0]
-        basefile = ocrolib.allsplitext(os.path.basename(f))[0]
-        child = xmldoc.createElement('mets:file')
-        child.setAttribute('ID', 'DESKEW_'+basefile)
-        child.setAttribute('GROUPID', 'P_' + basefile)
-        child.setAttribute('MIMETYPE', "image/png")
-
-        subChild = xmldoc.createElement('mets:FLocat')
-        subChild.setAttribute('LOCTYPE', "URL")
-        subChild.setAttribute('xlink:href', f)
-
-        # xmldoc.getElementsByTagName('mets:file')[0].appendChild(subChild);
-        subRoot.appendChild(child)
-        child.appendChild(subChild)
-
-    # subRoot.appendChild(child)
-    xmldoc.getElementsByTagName('mets:fileSec')[0].appendChild(subRoot)
-
-    if not args.OutputMets:
-        metsFileSave = open(os.path.join(
-            args.work, os.path.basename(args.mets)), "w")
-    else:
-        metsFileSave = open(os.path.join(args.work, args.OutputMets if args.OutputMets.endswith(
-            ".xml") else args.OutputMets+'.xml'), "w")
-    metsFileSave.write(xmldoc.toxml())
-
-#args.files = ocrolib.glob_all(args.files)
-
-
-def print_info(*objs):
-    print("INFO: ", *objs, file=sys.stdout)
+from ..utils import parseXML, write_to_xml, print_info
 
 
 def estimate_skew_angle(image, angles):
@@ -228,6 +174,8 @@ def main():
                         help="METs image group id")
 
     args = parser.parse_args()
+
+    #args.files = ocrolib.glob_all(args.files)
 
     # Read parameter values from json file
     if args.parameter:
