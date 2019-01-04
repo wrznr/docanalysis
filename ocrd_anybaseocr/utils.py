@@ -1,10 +1,12 @@
 import os.path
+import sys
 from xml.dom import minidom
+
 import ocrolib
 
 __all__ = [
     'parseXML',
-    'write_to_xml'
+    'write_to_xml',
     'print_info',
 ]
 

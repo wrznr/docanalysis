@@ -42,96 +42,104 @@
 #!/usr/bin/env python
 
 
-from pylab import *
 import argparse
 import os
 import os.path
+import sys
+import json
+
+from pylab import amin, amax, linspace, mean, var, plot, ginput, ones, clip, imshow
 from scipy.ndimage import filters, interpolation, morphology
 from scipy import stats
 import ocrolib
-import json
 from ..utils import parseXML, write_to_xml, print_info
 
+class OcrdAnybaseocrDeskewer():
 
-def estimate_skew_angle(image, angles):
-    estimates = []
-    for a in angles:
-        v = mean(interpolation.rotate(
-            image, a, order=0, mode='constant'), axis=1)
-        v = var(v)
-        estimates.append((v, a))
-    if args.debug > 0:
-        plot([y for x, y in estimates], [x for x, y in estimates])
-        ginput(1, args.debug)
-    _, a = max(estimates)
-    return a
+    def __init__(self, args):
+        self.args = args
+
+    def estimate_skew_angle(self, image, angles):
+        args = self.args
+        estimates = []
+
+        for a in angles:
+            v = mean(interpolation.rotate(image, a, order=0, mode='constant'), axis=1)
+            v = var(v)
+            estimates.append((v, a))
+        if args.debug > 0:
+            plot([y for x, y in estimates], [x for x, y in estimates])
+            ginput(1, args.debug)
+        _, a = max(estimates)
+        return a
 
 
-def deskew(fpath, job):
-    base, _ = ocrolib.allsplitext(fpath)
-    basefile = ocrolib.allsplitext(os.path.basename(fpath))[0]
+    def deskew(self, fpath, job):
+        args = self.args
+        base, _ = ocrolib.allsplitext(fpath)
+        basefile = ocrolib.allsplitext(os.path.basename(fpath))[0]
 
-    if args.parallel < 2:
-        print_info("=== %s %-3d" % (fpath, job))
-    raw = ocrolib.read_image_gray(fpath)
-
-    flat = raw
-    # estimate skew angle and rotate
-    if args.maxskew > 0:
         if args.parallel < 2:
-            print_info("estimating skew angle")
+            print_info("=== %s %-3d" % (fpath, job))
+        raw = ocrolib.read_image_gray(fpath)
+
+        flat = raw
+        # estimate skew angle and rotate
+        if args.maxskew > 0:
+            if args.parallel < 2:
+                print_info("estimating skew angle")
+            d0, d1 = flat.shape
+            o0, o1 = int(args.bignore*d0), int(args.bignore*d1)
+            flat = amax(flat)-flat
+            flat -= amin(flat)
+            est = flat[o0:d0-o0, o1:d1-o1]
+            ma = args.maxskew
+            ms = int(2*args.maxskew*args.skewsteps)
+            angle = self.estimate_skew_angle(est, linspace(-ma, ma, ms+1))
+            flat = interpolation.rotate(flat, angle, mode='constant', reshape=0)
+            flat = amax(flat)-flat
+        else:
+            angle = 0
+
+        # estimate low and high thresholds
+        if args.parallel < 2:
+            print_info("estimating thresholds")
         d0, d1 = flat.shape
         o0, o1 = int(args.bignore*d0), int(args.bignore*d1)
-        flat = amax(flat)-flat
-        flat -= amin(flat)
         est = flat[o0:d0-o0, o1:d1-o1]
-        ma = args.maxskew
-        ms = int(2*args.maxskew*args.skewsteps)
-        angle = estimate_skew_angle(est, linspace(-ma, ma, ms+1))
-        flat = interpolation.rotate(flat, angle, mode='constant', reshape=0)
-        flat = amax(flat)-flat
-    else:
-        angle = 0
-
-    # estimate low and high thresholds
-    if args.parallel < 2:
-        print_info("estimating thresholds")
-    d0, d1 = flat.shape
-    o0, o1 = int(args.bignore*d0), int(args.bignore*d1)
-    est = flat[o0:d0-o0, o1:d1-o1]
-    if args.escale > 0:
-        # by default, we use only regions that contain
-        # significant variance; this makes the percentile
-        # based low and high estimates more reliable
-        e = args.escale
-        v = est-filters.gaussian_filter(est, e*20.0)
-        v = filters.gaussian_filter(v**2, e*20.0)**0.5
-        v = (v > 0.3*amax(v))
-        v = morphology.binary_dilation(v, structure=ones((int(e*50), 1)))
-        v = morphology.binary_dilation(v, structure=ones((1, int(e*50))))
+        if args.escale > 0:
+            # by default, we use only regions that contain
+            # significant variance; this makes the percentile
+            # based low and high estimates more reliable
+            e = args.escale
+            v = est-filters.gaussian_filter(est, e*20.0)
+            v = filters.gaussian_filter(v**2, e*20.0)**0.5
+            v = (v > 0.3*amax(v))
+            v = morphology.binary_dilation(v, structure=ones((int(e*50), 1)))
+            v = morphology.binary_dilation(v, structure=ones((1, int(e*50))))
+            if args.debug > 0:
+                imshow(v)
+                ginput(1, args.debug)
+            est = est[v]
+        lo = stats.scoreatpercentile(est.ravel(), args.lo)
+        hi = stats.scoreatpercentile(est.ravel(), args.hi)
+        # rescale the image to get the gray scale image
+        if args.parallel < 2:
+            print_info("rescaling")
+        flat -= lo
+        flat /= (hi-lo)
+        flat = clip(flat, 0, 1)
         if args.debug > 0:
-            imshow(v)
+            imshow(flat, vmin=0, vmax=1)
             ginput(1, args.debug)
-        est = est[v]
-    lo = stats.scoreatpercentile(est.ravel(), args.lo)
-    hi = stats.scoreatpercentile(est.ravel(), args.hi)
-    # rescale the image to get the gray scale image
-    if args.parallel < 2:
-        print_info("rescaling")
-    flat -= lo
-    flat /= (hi-lo)
-    flat = clip(flat, 0, 1)
-    if args.debug > 0:
-        imshow(flat, vmin=0, vmax=1)
-        ginput(1, args.debug)
-    bin = 1*(flat > args.threshold)
+        deskewed = 1*(flat > args.threshold)
 
-    # output the normalized grayscale and the thresholded images
-    print_info("%s lo-hi (%.2f %.2f) angle %4.1f" % (basefile, lo, hi, angle))
-    if args.parallel < 2:
-        print_info("writing")
-    ocrolib.write_image_binary(base+".ds.png", bin)
-    return base+".ds.png"
+        # output the normalized grayscale and the thresholded images
+        print_info("%s lo-hi (%.2f %.2f) angle %4.1f" % (basefile, lo, hi, angle))
+        if args.parallel < 2:
+            print_info("writing")
+        ocrolib.write_image_binary(base+".ds.png", deskewed)
+        return base+".ds.png"
 
 
 def main():
@@ -205,15 +213,16 @@ def main():
     # mendatory parameter check
     if not args.mets or not args.Input or not args.Output or not args.work:
         parser.print_help()
-        print("Example: python ocrd-anyBaseOCR-deskew.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)")
+        print("Example: ocrd-anybaseocr-deskew -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)")
         sys.exit(0)
 
     if args.work:
         if not os.path.exists(args.work):
             os.mkdir(args.work)
 
-    files = parseXML(args.mets)
-    fname = []
-    for i, f in enumerate(files):
-        fname.append(deskew(str(f), i+1))
-    write_to_xml(fname)
+    deskewer = OcrdAnybaseocrDeskewer(args)
+    files = parseXML(args.mets, args.Input)
+    fnames = []
+    for i, fname in enumerate(files):
+        fnames.append(deskewer.deskew(str(fname), i+1))
+    write_to_xml(fnames, args.mets, args.Output, args.OutputMets, args.work)
