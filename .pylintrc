@@ -32,3 +32,5 @@ disable =
     wrong-import-order,
     too-many-statements,
     too-many-return-statements,
+    len-as-condition,
+    consider-using-enumerate,

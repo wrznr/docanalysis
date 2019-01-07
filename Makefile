@@ -10,8 +10,10 @@ help:
 	@echo "    repo/assets    Clone OCR-D/assets to ./repo/assets"
 	@echo "    assets-clean   Remove assets"
 	@echo "    assets         Setup test assets"
+	@echo "    test           Run all tests"
 	@echo "    test-binarize  Test binarization"
 	@echo "    test-deskew    Test deskewing"
+	@echo "    test-crop      Test cropping"
 	@echo ""
 	@echo "  Variables"
 	@echo ""
@@ -50,3 +52,7 @@ test-binarize: assets-clean assets
 # Test deskewing
 test-deskew: assets-clean assets
 	cd $(testdir)/assets/dfki-testdata/data && $(exec_name_prefix)-deskew -m mets.xml -I OCR-D-IMG -O OCR-D-IMG-DESKEW-TEST
+
+# Test cropping
+test-crop: assets-clean assets
+	cd $(testdir)/assets/dfki-testdata/data && $(exec_name_prefix)-crop -m mets.xml -I OCR-D-IMG -O OCR-D-IMG-CROP-TEST
