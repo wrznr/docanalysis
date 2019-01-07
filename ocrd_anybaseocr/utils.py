@@ -7,11 +7,15 @@ import ocrolib
 __all__ = [
     'parseXML',
     'write_to_xml',
+    'print_error',
     'print_info',
 ]
 
 def print_info(*objs):
     print("INFO: ", *objs, file=sys.stdout)
+
+def print_error(*objs):
+    print("ERROR: ", *objs, file=sys.stderr)
 
 def parse_params_with_defaults(params_json, params_schema):
     """
