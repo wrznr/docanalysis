@@ -45,9 +45,10 @@ import os
 import os.path
 import sys
 
-from pylab import amin, amax, mean, ginput, ones, clip, imshow, median, ion, gray, title, prod, minimum, array, clf
+from pylab import amin, amax, mean, ginput, ones, clip, imshow, median, ion, gray, minimum, array, clf
 from scipy.ndimage import filters, interpolation, morphology
 from scipy import stats
+import numpy as np
 
 from ..utils import parseXML, write_to_xml, print_info, parse_params_with_defaults, print_error
 from ..constants import OCRD_TOOL
@@ -75,13 +76,13 @@ class OcrdAnybaseocrBinarizer():
 
 
     def dshow(self, image, info):
-        if self.param.debug <= 0:
+        if self.param['debug'] <= 0:
             return
         ion()
         gray()
         imshow(image)
         title(info)
-        ginput(1, self.param.debug)
+        ginput(1, self.param['debug'])
 
     def run(self, fname, i):
         print_info("# %s" % (fname))
@@ -95,7 +96,7 @@ class OcrdAnybaseocrBinarizer():
             return
         image /= amax(image)
 
-        if not self.param.nocheck:
+        if not self.param['nocheck']:
             check = self.check_page(amax(image)-image)
             if check is not None:
                 print_error(fname+" SKIPPED. "+check +
@@ -103,10 +104,10 @@ class OcrdAnybaseocrBinarizer():
                 return
 
         # check whether the image is already effectively binarized
-        if self.param.gray:
+        if self.param['gray']:
             extreme = 0
         else:
-            extreme = (sum(image < 0.05)+sum(image > 0.95))*1.0/prod(image.shape)
+            extreme = (np.sum(image < 0.05) + np.sum(image > 0.95)) * 1.0 / np.prod(image.shape)
         if extreme > 0.95:
             comment = "no-normalization"
             flat = image
@@ -114,63 +115,63 @@ class OcrdAnybaseocrBinarizer():
             comment = ""
             # if not, we need to flatten it by estimating the local whitelevel
             print_info("flattening")
-            m = interpolation.zoom(image, self.param.zoom)
-            m = filters.percentile_filter(m, self.param.perc, size=(self.param.range, 2))
-            m = filters.percentile_filter(m, self.param.perc, size=(2, self.param.range))
-            m = interpolation.zoom(m, 1.0/self.param.zoom)
-            if self.param.debug > 0:
+            m = interpolation.zoom(image, self.param['zoom'])
+            m = filters.percentile_filter(m, self.param['perc'], size=(self.param['range'], 2))
+            m = filters.percentile_filter(m, self.param['perc'], size=(2, self.param['range']))
+            m = interpolation.zoom(m, 1.0/self.param['zoom'])
+            if self.param['debug'] > 0:
                 clf()
                 imshow(m, vmin=0, vmax=1)
-                ginput(1, self.param.debug)
+                ginput(1, self.param['debug'])
             w, h = minimum(array(image.shape), array(m.shape))
             flat = clip(image[:w, :h]-m[:w, :h]+1, 0, 1)
-            if self.param.debug > 0:
+            if self.param['debug'] > 0:
                 clf()
                 imshow(flat, vmin=0, vmax=1)
-                ginput(1, self.param.debug)
+                ginput(1, self.param['debug'])
 
         # estimate low and high thresholds
         print_info("estimating thresholds")
         d0, d1 = flat.shape
-        o0, o1 = int(self.param.bignore*d0), int(self.param.bignore*d1)
+        o0, o1 = int(self.param['bignore']*d0), int(self.param['bignore']*d1)
         est = flat[o0:d0-o0, o1:d1-o1]
-        if self.param.escale > 0:
+        if self.param['escale'] > 0:
             # by default, we use only regions that contain
             # significant variance; this makes the percentile
             # based low and high estimates more reliable
-            e = self.param.escale
+            e = self.param['escale']
             v = est-filters.gaussian_filter(est, e*20.0)
             v = filters.gaussian_filter(v**2, e*20.0)**0.5
             v = (v > 0.3*amax(v))
             v = morphology.binary_dilation(v, structure=ones((int(e*50), 1)))
             v = morphology.binary_dilation(v, structure=ones((1, int(e*50))))
-            if self.param.debug > 0:
+            if self.param['debug'] > 0:
                 imshow(v)
-                ginput(1, self.param.debug)
+                ginput(1, self.param['debug'])
             est = est[v]
-        lo = stats.scoreatpercentile(est.ravel(), self.param.lo)
-        hi = stats.scoreatpercentile(est.ravel(), self.param.hi)
+        lo = stats.scoreatpercentile(est.ravel(), self.param['lo'])
+        hi = stats.scoreatpercentile(est.ravel(), self.param['hi'])
         # rescale the image to get the gray scale image
         print_info("rescaling")
         flat -= lo
         flat /= (hi-lo)
         flat = clip(flat, 0, 1)
-        if self.param.debug > 0:
+        if self.param['debug'] > 0:
             imshow(flat, vmin=0, vmax=1)
-            ginput(1, self.param.debug)
-        bin = 1*(flat > self.param.threshold)
+            ginput(1, self.param['debug'])
+        binarized = 1*(flat > self.param['threshold'])
 
         # output the normalized grayscale and the thresholded images
         #print_info("%s lo-hi (%.2f %.2f) angle %4.1f %s" % (fname, lo, hi, angle, comment))
         print_info("%s lo-hi (%.2f %.2f) %s" % (fname, lo, hi, comment))
         print_info("writing")
-        if self.param.debug > 0 or self.param.show:
+        if self.param['debug'] > 0 or self.param['show']:
             clf()
             gray()
-            imshow(bin)
-            ginput(1, max(0.1, self.param.debug))
+            imshow(binarized)
+            ginput(1, max(0.1, self.param['debug']))
         base, _ = ocrolib.allsplitext(fname)
-        ocrolib.write_image_binary(base+".bin.png", bin)
+        ocrolib.write_image_binary(base+".bin.png", binarized)
         ocrolib.write_image_gray(base+".nrm.png", flat)
         # print("########### File path : ", base+".nrm.png")
         # write_to_xml(base+".bin.png")
@@ -201,7 +202,8 @@ def main():
     if args.parameter:
         with open(args.parameter, 'r') as param_file:
             param = json.loads(param_file.read())
-    param = parse_params_with_defaults(param, OCRD_TOOL['tools']['ocrd-anybaseocr-deskew']['parameters'])
+    param = parse_params_with_defaults(param, OCRD_TOOL['tools']['ocrd-anybaseocr-binarize']['parameters'])
+    #  print(param)
     # End to read parameters
 
     # mandatory parameter check
