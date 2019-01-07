@@ -40,6 +40,24 @@
         "threshold": {"type": "number", "format": "float",   "default": 0.5,   "description": "threshold, determines lightness"},
         "zoom":      {"type": "number", "format": "float",   "default": 0.5,   "description": "zoom for page background estimation, smaller=faster"}
       }
+    },
+    "ocrd-anybaseocr-crop": {
+      "executable": "ocrd-anybaseocr-crop",
+      "description": "Image crop using non-linear processing",
+      "categories": ["Image preprocessing"],
+      "steps": ["preprocessing/cropping"],
+      "parameters": {
+        "colSeparator":  {"type": "number", "format": "float", "default": 0.04, "description": "consider space between column. 25% of width"},
+        "maxRularArea":  {"type": "number", "format": "float", "default": 0.3, "description": "Consider maximum rular area"},
+        "minArea":       {"type": "number", "format": "float", "default": 0.05, "description": "rular position in below"},
+        "minRularArea":  {"type": "number", "format": "float", "default": 0.01, "description": "Consider minimum rular area"},
+        "positionBelow": {"type": "number", "format": "float", "default": 0.75, "description": "rular position in below"},
+        "positionLeft":  {"type": "number", "format": "float", "default": 0.4, "description": "rular position in left"},
+        "positionRight": {"type": "number", "format": "float", "default": 0.6, "description": "rular position in right"},
+        "rularRatioMax": {"type": "number", "format": "float", "default": 10.0, "description": "rular position in below"},
+        "rularRatioMin": {"type": "number", "format": "float", "default": 3.0, "description": "rular position in below"},
+        "rularWidth":    {"type": "number", "format": "float", "default": 0.95, "description": "maximum rular width"}
+      }
     }
   }
 }
