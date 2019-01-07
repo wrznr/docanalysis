@@ -11,9 +11,7 @@ setup(
     license='Apache License 2.0',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    install_requires=[
-        'ocrd-fork-ocropy>=1.4.0a1',
-    ],
+    install_requires=open('requirements.txt').read().split('\n'),
     packages=['ocrd_anybaseocr'],
     package_data={
         '': ['*.json']
