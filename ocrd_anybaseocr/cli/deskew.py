@@ -75,7 +75,7 @@ class OcrdAnybaseocrDeskewer():
         return a
 
 
-    def deskew(self, fpath, job):
+    def run(self, fpath, job):
         param = self.param
         base, _ = ocrolib.allsplitext(fpath)
         basefile = ocrolib.allsplitext(os.path.basename(fpath))[0]
@@ -187,5 +187,5 @@ def main():
     files = parseXML(args.mets, args.Input)
     fnames = []
     for i, fname in enumerate(files):
-        fnames.append(deskewer.deskew(str(fname), i+1))
+        fnames.append(deskewer.run(str(fname), i+1))
     write_to_xml(fnames, args.mets, args.Output, args.OutputMets, args.work)

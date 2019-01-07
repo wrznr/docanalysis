@@ -6,3 +6,5 @@ debug*
 */**/__pycache__
 *~
 *.egg-info
+repo
+tests/assets
