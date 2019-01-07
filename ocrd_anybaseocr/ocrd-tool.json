@@ -35,7 +35,6 @@
         "escale":    {"type": "number", "format": "float",   "default": 1.0,   "description": "scale for estimating a mask over the text region"},
         "hi":        {"type": "number", "format": "float",   "default": 90,    "description": "percentile for white estimation"},
         "lo":        {"type": "number", "format": "float",   "default": 5,     "description": "percentile for black estimation"},
-        "parallel":  {"type": "number", "format": "integer", "default": 0,     "description": "???"},
         "perc":      {"type": "number", "format": "float",   "default": 80,    "description": "percentage for filters"},
         "range":     {"type": "number", "format": "integer", "default": 20,    "description": "range for filters"},
         "threshold": {"type": "number", "format": "float",   "default": 0.5,   "description": "threshold, determines lightness"},

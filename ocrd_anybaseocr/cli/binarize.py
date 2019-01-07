@@ -85,8 +85,7 @@ class OcrdAnybaseocrBinarizer():
 
     def run(self, fname, i):
         print_info("# %s" % (fname))
-        if self.param.parallel < 2:
-            print_info("=== %s %-3d" % (fname, i))
+        print_info("=== %s %-3d" % (fname, i))
         raw = ocrolib.read_image_gray(fname)
         self.dshow(raw, "input")
         # perform image normalization
@@ -114,8 +113,7 @@ class OcrdAnybaseocrBinarizer():
         else:
             comment = ""
             # if not, we need to flatten it by estimating the local whitelevel
-            if self.param.parallel < 2:
-                print_info("flattening")
+            print_info("flattening")
             m = interpolation.zoom(image, self.param.zoom)
             m = filters.percentile_filter(m, self.param.perc, size=(self.param.range, 2))
             m = filters.percentile_filter(m, self.param.perc, size=(2, self.param.range))
@@ -132,8 +130,7 @@ class OcrdAnybaseocrBinarizer():
                 ginput(1, self.param.debug)
 
         # estimate low and high thresholds
-        if self.param.parallel < 2:
-            print_info("estimating thresholds")
+        print_info("estimating thresholds")
         d0, d1 = flat.shape
         o0, o1 = int(self.param.bignore*d0), int(self.param.bignore*d1)
         est = flat[o0:d0-o0, o1:d1-o1]
@@ -154,8 +151,7 @@ class OcrdAnybaseocrBinarizer():
         lo = stats.scoreatpercentile(est.ravel(), self.param.lo)
         hi = stats.scoreatpercentile(est.ravel(), self.param.hi)
         # rescale the image to get the gray scale image
-        if self.param.parallel < 2:
-            print_info("rescaling")
+        print_info("rescaling")
         flat -= lo
         flat /= (hi-lo)
         flat = clip(flat, 0, 1)
@@ -167,8 +163,7 @@ class OcrdAnybaseocrBinarizer():
         # output the normalized grayscale and the thresholded images
         #print_info("%s lo-hi (%.2f %.2f) angle %4.1f %s" % (fname, lo, hi, angle, comment))
         print_info("%s lo-hi (%.2f %.2f) %s" % (fname, lo, hi, comment))
-        if self.param.parallel < 2:
-            print_info("writing")
+        print_info("writing")
         if self.param.debug > 0 or self.param.show:
             clf()
             gray()
@@ -214,9 +209,6 @@ def main():
         parser.print_help()
         print("Example: python ocrd-anyBaseOCR-binarize.py -m (mets input file path) -I (input-file-grp name) -O (output-file-grp name) -w (Working directory)")
         sys.exit(0)
-
-    if args.debug > 0 or args.show > 0:
-        args.parallel = 0
 
     if args.work:
         if not os.path.exists(args.work):
