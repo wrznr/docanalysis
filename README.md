@@ -2,6 +2,8 @@
 
 > Tools for preprocessing scanned images for OCR
 
+[![Build Status](https://travis-ci.org/kba/ocrd_dfkitools.svg?branch=master)](https://travis-ci.org/kba/ocrd_dfkitools)
+
 The sequence of operations is: binarization, deskewing, cropping and dewarping
 (or can also be: binarization, dewarping, deskewing, and cropping; depends upon
 use-case).
