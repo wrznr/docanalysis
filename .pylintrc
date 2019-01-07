@@ -31,3 +31,4 @@ disable =
     too-few-public-methods,
     wrong-import-order,
     too-many-statements,
+    too-many-return-statements,

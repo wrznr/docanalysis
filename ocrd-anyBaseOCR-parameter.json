@@ -1,39 +1,39 @@
 {
 	"anyBaseOCR": {
     	"bin": {
-            "threshold": 0.5,
-            "zoom": 0.5,
-            "escale": 1.0,
             "bignore": 0.1,
+            "debug": 0,
+            "escale": 1.0,
+            "hi": 90,
+            "lo": 5,
+            "parallel": 0,
             "perc": 80,
             "range": 20,
-            "lo": 5,
-            "hi": 90,
-            "debug": 0,
-            "parallel": 0
+            "threshold": 0.5,
+            "zoom": 0.5
     	},
         "deskew": {
           "bignore": 0.1,
-          "threshold": 0.5,
-          "escale": 1.0,
-          "lo": 5,
-          "hi": 90,
-          "maxskew": 2.0,
-          "skewsteps": 8,
           "debug": 0.0,
-          "parallel": 0
+          "escale": 1.0,
+          "hi": 90,
+          "lo": 5,
+          "maxskew": 2.0,
+          "parallel": 0,
+          "skewsteps": 8,
+          "threshold": 0.5
         },
         "crop": {
+            "colSeparator": 0.04,
             "maxRularArea": 0.3,
+            "minArea": 0.05,
             "minRularArea": 0.01,
-            "rularWidth": 0.95,
+            "positionBelow": 0.75,
             "positionLeft": 0.4,
             "positionRight": 0.6,
-            "positionBelow": 0.75,
             "rularRatioMax": 10.0,
             "rularRatioMin": 3.0,
-            "colSeparator": 0.04,
-            "minArea": 0.05
+            "rularWidth": 0.95
         },
         "dewarping": {
             
