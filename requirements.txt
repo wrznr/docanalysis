@@ -1,4 +1,2 @@
-ocrd-fork-ocropy>=1.4.0a1
-pylsd @ git+https://github.com/primetang/pylsd#egg=pylsd
-
-
+ocrd-fork-ocropy >= 1.4.0a1
+ocrd-fork-pylsd >= 0.0.3
