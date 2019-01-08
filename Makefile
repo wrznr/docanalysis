@@ -43,7 +43,7 @@ assets: repo/assets
 #
 
 # Run all tests
-test: test-binarize test-deskew
+test: test-binarize test-deskew test-crop
 
 # Test binarization
 test-binarize: assets-clean assets
