@@ -11,11 +11,11 @@ __all__ = [
     'print_info',
 ]
 
-def print_info(*objs):
-    print("INFO: ", *objs, file=sys.stdout)
+def print_info(msg):
+    print("INFO: %s" % msg)
 
-def print_error(*objs):
-    print("ERROR: ", *objs, file=sys.stderr)
+def print_error(msg):
+    print("ERROR: %s" % msg)
 
 def parse_params_with_defaults(params_json, params_schema):
     """
