@@ -1,4 +1,4 @@
 numpy >= 1.15.4
-opencv-python >= 3.4
+opencv-python-headless >= 4.1.0
 ocrd-fork-ocropy >= 1.4.0a1
 ocrd-fork-pylsd >= 0.0.3
