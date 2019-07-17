@@ -3,6 +3,7 @@
 > Tools for preprocessing scanned images for OCR
 
 [![Build Status](https://travis-ci.org/kba/ocrd_dfkitools.svg?branch=master)](https://travis-ci.org/kba/ocrd_dfkitools)
+[![CircleCI](https://circleci.com/gh/syedsaqibbukhari/docanalysis.svg?style=svg)](https://circleci.com/gh/syedsaqibbukhari/docanalysis)
 
 The sequence of operations is: binarization, deskewing, cropping and dewarping
 (or can also be: binarization, dewarping, deskewing, and cropping; depends upon
@@ -29,6 +30,22 @@ Extracted from ocropus-nlbin (from https://github.com/tmbdev/ocropy/).
 This function takes a document image as input and crops/selects the page
 content area only (that's mean remove textual noise as well as any other noise
 around page content area)
+
+### ocrd-anybaseocr-dewarp
+
+This function takes a document image as input and make the text line straight if its curved.
+
+## Installing
+
+To install anyBaseOCR dependencies system-wide:
+
+    $ sudo pip install .
+
+Alternatively, dependencies can be installed into a Virtual Environment:
+
+    $ virtualenv venv
+    $ source venv/bin/activate
+    $ pip install -e .
 
 ## Testing
 

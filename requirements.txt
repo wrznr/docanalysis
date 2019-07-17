@@ -1,4 +1,11 @@
 numpy >= 1.15.4
 opencv-python-headless >= 4.1.0
-ocrd-fork-ocropy >= 1.4.0a1
 ocrd-fork-pylsd >= 0.0.3
+opencv-python >= 3.4
+ocrd-fork-ocropy >= 1.4.0a3
+click
+ocrd==1.0.0b10
+ocrd_modelfactory
+torch>=1.1.0
+torchvision
+dominate>=2.3.5

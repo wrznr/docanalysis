@@ -1,14 +1,13 @@
 import os.path
 import sys
 from xml.dom import minidom
-
 import ocrolib
 
 __all__ = [
-    'parseXML',
-    'write_to_xml',
     'print_error',
     'print_info',
+    'parseXML',
+    'write_to_xml',
 ]
 
 def print_info(msg):
@@ -37,7 +36,6 @@ def parseXML(fpath, Input):
             for f in childNodes:
                 input_files.append(f.attributes['xlink:href'].value)
     return input_files
-
 
 def write_to_xml(fpath, mets, Output, OutputMets, work):
     xmldoc = minidom.parse(mets)
