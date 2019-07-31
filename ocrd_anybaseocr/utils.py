@@ -10,11 +10,6 @@ __all__ = [
     'write_to_xml',
 ]
 
-def print_info(msg):
-    print("INFO: %s" % msg)
-
-def print_error(msg):
-    print("ERROR: %s" % msg)
 
 def parse_params_with_defaults(params_json, params_schema):
     """
@@ -26,6 +21,7 @@ def parse_params_with_defaults(params_json, params_schema):
             params_json[param_name] = param_schema['default']
     return params_json
 
+
 def parseXML(fpath, Input):
     input_files = []
     xmldoc = minidom.parse(fpath)
@@ -36,6 +32,7 @@ def parseXML(fpath, Input):
             for f in childNodes:
                 input_files.append(f.attributes['xlink:href'].value)
     return input_files
+
 
 def write_to_xml(fpath, mets, Output, OutputMets, work):
     xmldoc = minidom.parse(mets)
@@ -65,3 +62,10 @@ def write_to_xml(fpath, mets, Output, OutputMets, work):
         metsFileSave = open(os.path.join(work, OutputMets if OutputMets.endswith(
             ".xml") else OutputMets+'.xml'), "w")
     metsFileSave.write(xmldoc.toxml())
+
+def print_info(msg):
+    print("INFO: %s" % msg)
+
+
+def print_error(msg):
+    print("ERROR: %s" % msg)

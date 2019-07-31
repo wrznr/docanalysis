@@ -2,11 +2,11 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = 'ocrd-anybaseocr',
-    version = 'v0.0.1',
-    author = "Syed Saqib Bukhari, Mohammad Mohsin Reza, Md. Ajraf Rakib",
-    author_email = "Saqib.Bukhari@dfki.de, Mohammad_mohsin.reza@dfki.de, Md_ajraf.rakib@dfki.de",
-    url = "https://github.com/syedsaqibbukhari/docanalysis",
+    name='ocrd-anybaseocr',
+    version='v0.0.1',
+    author="Syed Saqib Bukhari, Mohammad Mohsin Reza, Md. Ajraf Rakib",
+    author_email="Saqib.Bukhari@dfki.de, Mohammad_mohsin.reza@dfki.de, Md_ajraf.rakib@dfki.de",
+    url="https://github.com/syedsaqibbukhari/docanalysis",
     license='Apache License 2.0',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
